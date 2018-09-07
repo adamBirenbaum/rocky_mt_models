@@ -1,7 +1,7 @@
 
 server <- function(input, output,session) {
-  region_df <<- read.csv("D:/abire/Documents/map_project/data_coordinates_long.csv",stringsAsFactors = F)
-  region_info_df <<- read.csv("D:/abire/Documents/map_project/data_coordinates.csv",stringsAsFactors = F)
+  region_df <<- read.csv("D:/abire/Documents/rocky_mt_models/data_coordinates_long.csv",stringsAsFactors = F)
+  region_info_df <<- read.csv("D:/abire/Documents/rocky_mt_models/data_coordinates.csv",stringsAsFactors = F)
   
   correct_region <- 0
   
@@ -36,7 +36,7 @@ server <- function(input, output,session) {
     
     region_coordinates <- region_info_df[correct_region,]
     
-    load(paste0("D:/abire/Documents/map_project/data_files/m",correct_region,".RData"))
+    load(paste0("D:/abire/Documents/rocky_mt_models/data_files/m",correct_region,".RData"))
     assign("m",get(paste0("m",correct_region)))
     rm(list = paste0("m",correct_region))
     
@@ -183,7 +183,7 @@ server <- function(input, output,session) {
  
  observeEvent(input$save_3d,{
   
-   rayshader::save_3dprint(filename = "D:/abire/Documents/map_project/saved_3d_print.stl",maxwidth = as.numeric(input$print_width),unit = "in")
+   rayshader::save_3dprint(filename = "D:/abire/Documents/rocky_mt_models/saved_3d_print.stl",maxwidth = as.numeric(input$print_width),unit = "in")
  })
   
 }
