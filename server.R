@@ -1,7 +1,9 @@
 
+path_to_directory <- "D:/abire/Documents/rocky_mt_models/"
+
 server <- function(input, output,session) {
-  region_df <<- read.csv("D:/abire/Documents/rocky_mt_models/data_coordinates_long.csv",stringsAsFactors = F)
-  region_info_df <<- read.csv("D:/abire/Documents/rocky_mt_models/data_coordinates.csv",stringsAsFactors = F)
+  region_df <<- read.csv(paste0(path_to_directory,"data_coordinates_long.csv"),stringsAsFactors = F)
+  region_info_df <<- read.csv(paste0(path_to_directory,"data_coordinates.csv"),stringsAsFactors = F)
   
   correct_region <- 0
   
@@ -36,7 +38,7 @@ server <- function(input, output,session) {
     
     region_coordinates <- region_info_df[correct_region,]
     
-    load(paste0("D:/abire/Documents/rocky_mt_models/data_files/m",correct_region,".RData"))
+    load(paste0(path_to_directory,"data_files/m",correct_region,".RData"))
     assign("m",get(paste0("m",correct_region)))
     rm(list = paste0("m",correct_region))
     
@@ -167,7 +169,7 @@ server <- function(input, output,session) {
       tagList(
         helpText("4. Press '3D Print' to save as a file for 3d printing"),
         column(width = 6,
-               actionButton("save_3d","3D Print")
+               downloadButton("save_3d","3D Print File")
                ),
         column(width = 6,
                selectInput("print_width", "Max Width (in)",choices = 4:10,selected = 4)
@@ -181,9 +183,20 @@ server <- function(input, output,session) {
  })
  
  
- observeEvent(input$save_3d,{
-  
-   rayshader::save_3dprint(filename = "D:/abire/Documents/rocky_mt_models/saved_3d_print.stl",maxwidth = as.numeric(input$print_width),unit = "in")
- })
+
+   output$save_3d <-downloadHandler(
+     filename <- function(){
+       name=gsub(' ','--',Sys.time())
+       name=gsub(':','-',name)
+       paste('3d_printable_file--',name,'.stl', sep='')
+     },
+     content=function(file){
+       rayshader::save_3dprint(filename = file,maxwidth = as.numeric(input$print_width),unit = "in")
+       
+
+       
+     }
+   )
+
   
 }
