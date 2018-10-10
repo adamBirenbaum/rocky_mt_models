@@ -14,17 +14,22 @@ server <- function(input, output,session) {
                           y = c(37,37,41,41,41,41,42,42,45,45),
                           yend = c(37,41,41,37,41,45,42,37,45,41))
   
-  get_map_safely <- function(location,zoom,maptype, source){
-    g <- try(get_map(location = location, zoom = zoom, maptype = maptype, source = source))
-    
+  get_map_safely <- function(custom_bbox,zoom,maptype){
+    g <- try(get_stamenmap(bbox = custom_bbox, zoom = zoom, maptype = maptype))
+
     error_in_map <- is_error(g)
     while (error_in_map) {
       Sys.sleep(4)
-      g <- try(get_map(location = location, zoom = zoom, maptype = maptype, source = source))
+      g <- try(get_stamenmap(bbox = custom_bbox, zoom = zoom, maptype = maptype))
       error_in_map <- is_error(g)
       
     }
     g
+  }
+  
+  get_bbox_from_click <- function(click_region_df){
+
+    with(data = click_region_df,c('left' = min(long), 'right' = max(long),'top' = max(lat),'bottom' = min(lat)))
   }
   
   get_bbox <- function(brush){
@@ -68,8 +73,17 @@ server <- function(input, output,session) {
   }
   
   observeEvent(input$reset,{
-    gmap  <<- get_map_safely(location = c(-109,41),zoom = 6,maptype = "roadmap",source="google") 
-    gmap <<-  ggmap(gmap)
+    
+    first_box <- c("left" = -114.54841312748, "right" = -101.72235567187, "top" = 45.16987829678, "bottom" = 36.563926697386)
+    
+    g  <- get_map_safely(first_box,zoom = 6,maptype = "terrain") 
+    gmap <<-  ggmap(g)
+    
+    
+    
+
+    
+
     
     output$map <- renderPlot({
       gmap + geom_polygon(data = region_df,aes(x = long, y = lat,group = factor(id)),alpha = 0,color = "black") +
@@ -83,13 +97,18 @@ server <- function(input, output,session) {
   
  output$map <- renderPlot({
 
-   gmap  <<- get_map_safely(location = c(-109,41),zoom = 6,maptype = "roadmap",source="google") 
-   gmap <<-  ggmap(gmap)
+
+   first_box <- c("left" = -114.54841312748, "right" = -101.72235567187, "top" = 45.16987829678, "bottom" = 36.563926697386)
+  
+
+   
+   g  <- get_map_safely(first_box,zoom = 6,maptype = "terrain") 
+   gmap <<-  ggmap(g)
   
    
    
      gmap + geom_polygon(data = region_df,aes(x = long, y = lat,group = factor(id)),alpha = 0,color = "black") +
-       geom_segment(data = states_df,aes(x = x, xend = xend, y = y ,yend = yend), color = "red",size = 2)
+   geom_segment(data = states_df,aes(x = x, xend = xend, y = y ,yend = yend), color = "red",size = 2)
  })
    
   
@@ -112,7 +131,8 @@ server <- function(input, output,session) {
 
 
    final_region <<- region_df %>% filter(id == correct_region)
-   gmap  <<- get_map_safely(location = c(final_region$avg_long[1],final_region$avg_lat[1]),zoom = 9,maptype = "roadmap",source="google") 
+   new_bbox <- get_bbox_from_click(final_region)
+   gmap  <<- get_map_safely(new_bbox,zoom = 10,maptype = "terrain") 
    gmap <<- ggmap(gmap)
    output$map <- renderPlot(
      gmap +    geom_polygon(data = final_region,aes(x = long, y = lat,group = factor(id)),alpha = 0,color = "black")
@@ -130,7 +150,7 @@ server <- function(input, output,session) {
    
    output$map <- renderPlot({
      
-     gmap <<- get_map_safely(location = gbbox,zoom = gzoom, maptype = "roadmap",source = "google")
+     gmap <<- get_map_safely(gbbox,zoom = gzoom, maptype = "terrain")
      gmap <<- ggmap(gmap)
      gmap
      
@@ -150,12 +170,16 @@ server <- function(input, output,session) {
    limits <- get_limits(input$brush)
    
    m <- filter_region_df(correct_region, limits)
+
    
+   rev_m <- make_skew_identify(dim(m)[2])
+   
+   m <- m %*% rev_m
    calc_zscale <- calculate_zscale(m, limits)
   
    m %>% sphere_shade(texture = "desert") %>%
-     #add_shadow(ray_shade(m,zscale = calc_zscale)) %>% 
-     #add_shadow(ambient_shade(m,zscale = calc_zscale)) %>% 
+     add_shadow(ray_shade(m,zscale = calc_zscale)) %>% 
+     add_shadow(ambient_shade(m,zscale = calc_zscale)) %>% 
      #add_water(detect_water(m,zscale = calc_zscale,cutoff = .99),color = "desert") %>% 
      plot_3d(m,zscale = calc_zscale) 
    
@@ -181,6 +205,12 @@ server <- function(input, output,session) {
     
     
  })
+ 
+ make_skew_identify <- function(n){
+   
+   matrix(c(rep(0,n-1),rep(c(1,rep(0,n-2)),n),0),ncol = n)
+   
+ }
  
  
 
