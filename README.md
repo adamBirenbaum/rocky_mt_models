@@ -1,6 +1,6 @@
 # rocky_mt_models
 
-![Example]([https://imgur.com/1IKmtY2](https://i.imgur.com/1IKmtY2.mp4))
+![Example](https://i.imgur.com/1IKmtY2.mp4))
 
 This needs a LOT of cleanup and commenting, but I'll summarize the main steps to get this working for anyone now.
 
