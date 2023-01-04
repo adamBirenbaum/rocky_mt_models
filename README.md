@@ -1,5 +1,7 @@
 # rocky_mt_models
 
+![](https://imgur.com/1IKmtY2)
+
 This needs a LOT of cleanup and commenting, but I'll summarize the main steps to get this working for anyone now.
 
 
